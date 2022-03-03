@@ -74,6 +74,18 @@ class SelfPlay:
                 if 1 < len(self.config.players):
                     shared_storage.set_info.remote(
                         {
+                            "muzero_success": sum(
+                                win
+                                for i, win in enumerate(game_history.success_history)
+                                if game_history.to_play_history[i - 1]
+                                == self.config.muzero_player
+                            ),
+                            "opponent_success": sum(
+                                win
+                                for i, win in enumerate(game_history.success_history)
+                                if game_history.to_play_history[i - 1]
+                                != self.config.muzero_player
+                            ),
                             "muzero_reward": sum(
                                 reward
                                 for i, reward in enumerate(game_history.reward_history)
@@ -119,6 +131,7 @@ class SelfPlay:
         game_history.observation_history.append(observation)
         game_history.reward_history.append(0)
         game_history.to_play_history.append(self.game.to_play())
+        game_history.success_history.append(0)
 
         done = False
 
@@ -167,7 +180,12 @@ class SelfPlay:
                         opponent, stacked_observations
                     )
 
-                observation, reward, done = self.game.step(action)
+                observation, reward, done, bool_win = self.game.step(action)
+                #print(f"observation: {observation}")
+                #print(f"reward: {reward}")
+                #print(f"done: {done}")
+                #print("-------------")
+
 
                 if render:
                     print(f"Played action: {self.game.action_to_string(action)}")
@@ -180,6 +198,13 @@ class SelfPlay:
                 game_history.observation_history.append(observation)
                 game_history.reward_history.append(reward)
                 game_history.to_play_history.append(self.game.to_play())
+                if(bool_win):
+                    game_history.success_history.append(1)
+                else:
+                    game_history.success_history.append(0)
+            #print("game history success")
+            #print(str(game_history.success_history) + " - " + str(game_history.reward_history))
+
 
         return game_history
 
@@ -486,6 +511,7 @@ class GameHistory:
         self.observation_history = []
         self.action_history = []
         self.reward_history = []
+        self.success_history = []
         self.to_play_history = []
         self.child_visits = []
         self.root_values = []

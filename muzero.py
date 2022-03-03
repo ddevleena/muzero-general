@@ -109,6 +109,8 @@ class MuZero:
             "num_played_steps": 0,
             "num_reanalysed_games": 0,
             "terminate": False,
+            "muzero_success":0,
+            "opponent_success":0
         }
         self.replay_buffer = {}
 
@@ -250,6 +252,8 @@ class MuZero:
             "num_played_games",
             "num_played_steps",
             "num_reanalysed_games",
+            "muzero_success",
+            "opponent_success"
         ]
         info = ray.get(self.shared_storage_worker.get_info.remote(keys))
         try:
@@ -298,6 +302,8 @@ class MuZero:
                 writer.add_scalar("3.Loss/Value_loss", info["value_loss"], counter)
                 writer.add_scalar("3.Loss/Reward_loss", info["reward_loss"], counter)
                 writer.add_scalar("3.Loss/Policy_loss", info["policy_loss"], counter)
+                writer.add_scalar("4.Success/1.MuZero_Success_Rate", info["muzero_success"], counter)
+                writer.add_scalar("4.Success/2.Opponent_Success_Rate", info["opponent_success"], counter)
                 print(
                     f'Last test reward: {info["total_reward"]:.2f}. Training step: {info["training_step"]}/{self.config.training_steps}. Played games: {info["num_played_games"]}. Loss: {info["total_loss"]:.2f}',
                     end="\r",
@@ -657,7 +663,7 @@ if __name__ == "__main__":
                 done = False
                 while not done:
                     action = env.human_to_action()
-                    observation, reward, done = env.step(action)
+                    observation, reward, done, _ = env.step(action)
                     print(f"\nAction: {env.action_to_string(action)}\nReward: {reward}")
                     env.render()
             elif choice == 6:
